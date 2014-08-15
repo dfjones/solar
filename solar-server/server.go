@@ -17,10 +17,10 @@ type ImageForm struct {
 
 type LatestImage struct {
 	bytes []byte
-	mutex *sync.Mutex
+	sync.Mutex
 }
 
-var latestImage *LatestImage = &LatestImage{nil, &sync.Mutex{}}
+var latestImage *LatestImage = new(LatestImage)
 
 func imagePostTemp(res http.ResponseWriter, log *log.Logger, imageForm ImageForm, errors binding.Errors) string {
 	if errors != nil {
@@ -48,14 +48,14 @@ func imagePostMem(imageForm ImageForm) {
 	}
 	defer file.Close()
 
-	latestImage.mutex.Lock()
-	defer latestImage.mutex.Unlock()
+	latestImage.Lock()
+	defer latestImage.Unlock()
 	latestImage.bytes, err = ioutil.ReadAll(file)
 }
 
 func imageGet(res http.ResponseWriter) []byte {
-	latestImage.mutex.Lock()
-	defer latestImage.mutex.Unlock()
+	latestImage.Lock()
+	defer latestImage.Unlock()
 	return latestImage.bytes
 }
 
