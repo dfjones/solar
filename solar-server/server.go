@@ -20,7 +20,7 @@ type LatestImage struct {
 	mutex *sync.Mutex
 }
 
-var latestImage *LatestImage
+var latestImage *LatestImage = &LatestImage{nil, &sync.Mutex{}}
 
 func imagePostTemp(res http.ResponseWriter, log *log.Logger, imageForm ImageForm, errors binding.Errors) string {
 	if errors != nil {
@@ -62,8 +62,6 @@ func imageGet(res http.ResponseWriter) []byte {
 func main() {
 
 	m := martini.Classic()
-
-	latestImage = &LatestImage{nil, &sync.Mutex{}}
 
 	m.Post("/images", binding.MultipartForm(ImageForm{}), imagePostMem)
 	m.Get("/images", imageGet)
