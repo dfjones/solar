@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dfjones/solar/solar-server/image-storage"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
 	"io"
@@ -41,6 +42,15 @@ func imagePostTemp(res http.ResponseWriter, log *log.Logger, imageForm ImageForm
 	return tempFile.Name()
 }
 
+func imagePostFile(imageForm ImageForm) {
+	imageFile, err := imageForm.ImageUpload.Open()
+	if err != nil {
+		return
+	}
+	defer imageFile.Close()
+	image_storage.Store(imageFile)
+}
+
 func imagePostMem(imageForm ImageForm) {
 	file, err := imageForm.ImageUpload.Open()
 	if err != nil {
@@ -53,17 +63,28 @@ func imagePostMem(imageForm ImageForm) {
 	latestImage.bytes, err = ioutil.ReadAll(file)
 }
 
-func imageGet(res http.ResponseWriter) []byte {
-	latestImage.Lock()
-	defer latestImage.Unlock()
-	return latestImage.bytes
+func imageGet(log *log.Logger) []byte {
+	r, err := image_storage.GetMostRecentImageReader()
+	if err != nil {
+		log.Println("error: ", err)
+		return nil
+	}
+	if r == nil {
+		return nil
+	}
+	ret, err := ioutil.ReadAll(r)
+	if err != nil {
+		log.Println("error: ", err)
+		return nil
+	}
+	return ret
 }
 
 func main() {
 
 	m := martini.Classic()
 
-	m.Post("/images", binding.MultipartForm(ImageForm{}), imagePostMem)
+	m.Post("/images", binding.MultipartForm(ImageForm{}), imagePostFile)
 	m.Get("/images", imageGet)
 
 	m.Run()
