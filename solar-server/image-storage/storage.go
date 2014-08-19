@@ -3,15 +3,22 @@ package image_storage
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var dataDir string = "/data/solar/images/"
-var counter uint64
+const dataDir string = "/data/solar/images/"
+const maxFileCount int = 2
+
+var cleanUpSignal chan struct{} = make(chan struct{})
 var mostRecentImageInfo MostRecentImageInfo
+
+var counter uint64
 
 type MostRecentImageInfo struct {
 	path string
@@ -20,6 +27,11 @@ type MostRecentImageInfo struct {
 
 func init() {
 	os.MkdirAll(dataDir, os.ModeDir|os.ModePerm)
+	mostRecentImageInfo.Lock()
+	defer mostRecentImageInfo.Unlock()
+	imageFiles := listImageFiles()
+	mostRecentImageInfo.path = imageFiles[len(imageFiles)-1]
+	go cleanup()
 }
 
 func Store(reader io.Reader) error {
@@ -28,11 +40,14 @@ func Store(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
+
 	_, err = io.Copy(file, reader)
 	if err != nil {
 		return err
 	}
 	updateMostRecent(file)
+	cleanUpSignal <- struct{}{}
 	return nil
 }
 
@@ -62,4 +77,42 @@ func getFileName() string {
 
 func getNextId() uint64 {
 	return atomic.AddUint64(&counter, uint64(1))
+}
+
+func cleanup() {
+	for _ = range cleanUpSignal {
+		// walk all the files in our data directory and gather them into a slice
+		removeOldestFiles()
+	}
+}
+
+func removeOldestFiles() {
+	imageFiles := listImageFiles()
+	extraFileCount := len(imageFiles) - maxFileCount
+	log.Println("Starting to remove oldest files...")
+	for i, p := range imageFiles {
+		if i >= extraFileCount {
+			return
+		}
+		log.Println("Removing: ", i, p)
+		err := os.Remove(p)
+		if err != nil {
+			log.Println("Error removing file: ", err)
+		}
+	}
+}
+
+func listImageFiles() []string {
+	imageFiles := make([]string, 0)
+	filepath.Walk(dataDir, func(path string, info os.FileInfo, err error) error {
+		if path != dataDir {
+			imageFiles = append(imageFiles, path)
+		}
+		return nil
+	})
+
+	// the files use unix timestamps as their names, so sorting them like this should order
+	// them oldest to newest
+	sort.Strings(imageFiles)
+	return imageFiles
 }
