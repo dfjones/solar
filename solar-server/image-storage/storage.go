@@ -53,7 +53,7 @@ func Store(reader io.Reader) error {
 	return nil
 }
 
-func GetMostRecentImageReader() (io.Reader, error) {
+func GetMostRecentImageFile() (*os.File, error) {
 	path := getMostRecentPath()
 	if path == "" {
 		return nil, nil
