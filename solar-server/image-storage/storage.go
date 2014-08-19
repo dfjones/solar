@@ -27,10 +27,12 @@ type MostRecentImageInfo struct {
 
 func init() {
 	os.MkdirAll(dataDir, os.ModeDir|os.ModePerm)
-	mostRecentImageInfo.Lock()
-	defer mostRecentImageInfo.Unlock()
 	imageFiles := listImageFiles()
-	mostRecentImageInfo.path = imageFiles[len(imageFiles)-1]
+	if len(imageFiles) > 0 {
+		mostRecentImageInfo.Lock()
+		defer mostRecentImageInfo.Unlock()
+		mostRecentImageInfo.path = imageFiles[len(imageFiles)-1]
+	}
 	go cleanup()
 }
 
