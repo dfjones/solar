@@ -13,7 +13,7 @@ import (
 )
 
 const dataDir string = "/data/solar/images/"
-const maxFileCount int = 2
+const maxFileCount int = 288
 
 var cleanUpSignal chan struct{} = make(chan struct{})
 var mostRecentImageInfo MostRecentImageInfo
