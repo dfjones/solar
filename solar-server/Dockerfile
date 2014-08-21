@@ -1,5 +1,6 @@
 FROM mischief/docker-golang
 ENV HOME /root
-RUN go get github.com/dfjones/solar/server
+RUN go get github.com/dfjones/solar/solar-server
+EXPOSE 3000
 
-CMD go run $GOPATH/src/github.com/dfjones/solar/server/server.go
+CMD $GOPATH/bin/solar-server
