@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function() {
+      var max = 288;
+      var index = 0;
+      $(document).keydown(function (e) {
+        switch(e.which) {
+
+          case 37: // left
+            if (index == 0) {
+              index = max;
+            } else {
+              index -= 1;
+            }
+            update();
+            break;
+
+          case 39: // right
+            index += 1;
+            update();
+            break;
+        }
+      });
+
+      var update = function() {
+        $("#image").attr({"src": "/solar/images/" + index});
+        $("#desc").html("" + index);
+      };
+
+    });
+    </script>
+</head>
+
+<body>
+    <img id="image" width="1000" height="562" src="/solar/images/0"/>
+    <div id="desc"> 0 </div>
+</body>
+
+</html>
