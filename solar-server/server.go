@@ -11,5 +11,7 @@ func main() {
 
 	image_resource.Register(m)
 
+	m.Use(m.Static("/gopath/src/app/public"))
+
 	m.Run()
 }
