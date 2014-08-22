@@ -12,7 +12,7 @@
 
           case 37: // left
             if (index == 0) {
-              index = max;
+              index = max - 1;
             } else {
               index -= 1;
             }
@@ -20,7 +20,7 @@
             break;
 
           case 39: // right
-            index += 1;
+            index = (index + 1) % 288;
             update();
             break;
         }
