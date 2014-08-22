@@ -5,39 +5,65 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script>
     $(document).ready(function() {
-      var max = 288;
-      var index = 0;
-      $(document).keydown(function (e) {
-        switch(e.which) {
+        var max = 288;
+        var index = 0;
 
-          case 37: // left
+        $("#left").click(function(e){
+          left();
+        });
+        $("#right").click(function(e){
+          right();
+        });
+        $(document).keydown(function(e) {
+            switch (e.which) {
+
+                case 37: // left
+                    left();
+                    break;
+
+                case 39: // right
+                    right();
+                    break;
+            }
+        });
+
+        var left = function() {
             if (index == 0) {
-              index = max - 1;
+                index = max - 1;
             } else {
-              index -= 1;
+                index -= 1;
             }
             update();
-            break;
+        };
 
-          case 39: // right
+        var right = function() {
             index = (index + 1) % 288;
             update();
-            break;
         }
-      });
 
-      var update = function() {
-        $("#image").attr({"src": "/solar/images/" + index});
-        $("#desc").html("" + index);
-      };
+        var update = function() {
+            $("#image").attr({
+                "src": "/solar/images/" + index
+            });
+            $("#desc").html("" + index);
+        };
 
     });
     </script>
 </head>
 
 <body>
-    <img id="image" width="1000" height="562" src="/solar/images/0"/>
-    <div id="desc"> 0 </div>
+    <div style="float: left;">
+        <div>
+            <img id="image" width="1000" height="562" src="/solar/images/0" />
+        </div>
+        <div id="desc">0</div>
+        <div>
+            <span id="left" style="float: left;">&#8592;</span>
+            <span id="right" style="float: right;">&#8594;</span>
+        </div>
+    </div>
+    <div></div>
 </body>
 
 </html>
