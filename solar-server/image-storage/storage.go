@@ -61,6 +61,15 @@ func GetMostRecentImageFile() (*os.File, error) {
 	return os.Open(path)
 }
 
+func GetByIndex(i int) (*os.File, error) {
+	images := listImageFiles()
+	l := len(images)
+	if l == 0 || i >= l {
+		return nil, nil
+	}
+	return os.Open(images[i])
+}
+
 func getMostRecentPath() string {
 	mostRecentImageInfo.RLock()
 	defer mostRecentImageInfo.RUnlock()
