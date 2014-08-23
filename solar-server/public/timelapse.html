@@ -5,6 +5,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script>
     $(document).ready(function() {
+        var ow = 2592.0;
+        var oh = 1944.0;
         var max = 288;
         var index = 0;
 
@@ -21,6 +23,30 @@
             right();
           }
         });
+
+        var imageResize = function() {
+          var ww = $(window).width();
+          var wh = $(window).height();
+          var nw = 0.2 * ow;
+          var nh = 0.2 * oh;
+          for (var m = 0.3; m <= 1.0; m += 0.1) {
+            var tw = ow * m;
+            var th = oh * m;
+            if (tw >= ww || th >= wh) {
+              break;
+            }
+            nw = tw;
+            nh = th;
+          }
+          $("#image").attr({
+            "width": nw,
+            "height": nh
+          });
+        };
+
+        imageResize();
+
+        $(window).resize(imageResize);
 
         $(document).keydown(function(e) {
             switch (e.which) {
