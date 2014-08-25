@@ -4,11 +4,12 @@ import (
 	"github.com/dfjones/solar/solar-server/image-storage"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/binding"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type imageForm struct {
@@ -21,39 +22,34 @@ func Register(m *martini.ClassicMartini) {
 	m.Get("/images/:index", getByIndex)
 }
 
-func getLatest(log *log.Logger) []byte {
+func getLatest(w http.ResponseWriter, req *http.Request, log *log.Logger) {
 	file, err := image_storage.GetMostRecentImageFile()
 	if err != nil {
 		log.Println("error: ", err)
-		return nil
+		return
 	}
-	return readAndClose(file)
+	serveAndClose(file, w, req)
 }
 
-func getByIndex(params martini.Params) []byte {
+func getByIndex(w http.ResponseWriter, req *http.Request, params martini.Params) {
 	index, err := strconv.Atoi(params["index"])
 	if err != nil {
-		return nil
+		return
 	}
 	file, err := image_storage.GetByIndex(index)
 	if err != nil {
 		log.Println("error: ", err)
-		return nil
+		return
 	}
-	return readAndClose(file)
+	serveAndClose(file, w, req)
 }
 
-func readAndClose(file *os.File) []byte {
+func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
 	if file == nil {
-		return nil
+		return
 	}
 	defer file.Close()
-	ret, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Println("error: ", err)
-		return nil
-	}
-	return ret
+	http.ServeContent(w, req, file.Name(), time.Now(), file)
 }
 
 func postImage(imageForm imageForm) {
