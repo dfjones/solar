@@ -27,22 +27,31 @@
         });
 
         var imageResize = function() {
-          var ww = $(window).width();
-          var wh = $(window).height();
-          var nw = 0.2 * ow;
-          var nh = 0.2 * oh;
-          for (var m = 0.3; m <= 1.0; m += 0.05) {
-            var tw = ow * m;
-            var th = oh * m;
-            if (tw >= ww || th >= wh) {
-              break;
-            }
-            nw = tw;
-            nh = th;
+          var ww = $(window).width() - 50;
+          var wh = $(window).height() - 50;
+
+          var ra = ww / ow;
+          var rb = wh / oh;
+
+          var a = {
+            w: ow * ra,
+            h: oh * ra
           }
+
+          var b = {
+            w: ow * rb,
+            h: oh * rb
+          }
+
+          var winner = a;
+
+          if (a.w > ww || a.h > wh) {
+            winner = b;
+          }
+
           $("#image").attr({
-            "width": nw,
-            "height": nh
+            "width": winner.w,
+            "height": winner.h
           });
         };
 
