@@ -49,6 +49,7 @@ func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer file.Close()
+	w.Header().Set("cache-control", "public, max-age=300")
 	http.ServeContent(w, req, file.Name(), time.Now(), file)
 }
 
