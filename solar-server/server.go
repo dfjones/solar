@@ -2,16 +2,18 @@ package main
 
 import (
 	"github.com/dfjones/solar/solar-server/image-resource"
-	"github.com/go-martini/martini"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"net/http"
+	"os"
 )
 
 func main() {
 
-	m := martini.Classic()
+	r := mux.NewRouter()
 
-	image_resource.Register(m)
+	image_resource.Register(r)
 
-	m.Use(martini.Static("/gopath/src/app/public"))
-
-	m.Run()
+	http.Handle("/", handlers.CombinedLoggingHandler(os.Stdout, r))
+	http.ListenAndServe(":3000", nil)
 }

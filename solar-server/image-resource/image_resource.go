@@ -2,27 +2,21 @@ package image_resource
 
 import (
 	"github.com/dfjones/solar/solar-server/image-storage"
-	"github.com/go-martini/martini"
-	"github.com/martini-contrib/binding"
+	"github.com/gorilla/mux"
 	"log"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 )
 
-type imageForm struct {
-	ImageUpload *multipart.FileHeader `form:"image" binding:"required"`
+func Register(r *mux.Router) {
+	r.HandleFunc("/images", postImage).Methods("POST")
+	r.HandleFunc("/images/latest", getLatest).Methods("GET")
+	r.HandleFunc("/images/{id:[0-9]+}", getByIndex).Methods("GET")
 }
 
-func Register(m *martini.ClassicMartini) {
-	m.Post("/images", binding.MultipartForm(imageForm{}), postImage)
-	m.Get("/images/latest", getLatest)
-	m.Get("/images/:index", getByIndex)
-}
-
-func getLatest(w http.ResponseWriter, req *http.Request, log *log.Logger) {
+func getLatest(w http.ResponseWriter, req *http.Request) {
 	file, err := image_storage.GetMostRecentImageFile()
 	if err != nil {
 		log.Println("error: ", err)
@@ -31,8 +25,8 @@ func getLatest(w http.ResponseWriter, req *http.Request, log *log.Logger) {
 	serveAndClose(file, w, req)
 }
 
-func getByIndex(w http.ResponseWriter, req *http.Request, params martini.Params) {
-	index, err := strconv.Atoi(params["index"])
+func getByIndex(w http.ResponseWriter, req *http.Request) {
+	index, err := strconv.Atoi(mux.Vars(req)["index"])
 	if err != nil {
 		return
 	}
@@ -53,8 +47,8 @@ func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
 	http.ServeContent(w, req, file.Name(), time.Now(), file)
 }
 
-func postImage(imageForm imageForm) {
-	imageFile, err := imageForm.ImageUpload.Open()
+func postImage(w http.ResponseWriter, r *http.Request) {
+	imageFile, _, err := r.FormFile("image")
 	if err != nil {
 		return
 	}
