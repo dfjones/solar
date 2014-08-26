@@ -2,7 +2,7 @@ package image_resource
 
 import (
 	"github.com/dfjones/solar/solar-server/image-storage"
-	"github.com/gorilla/mux"
+	"github.com/gocraft/web"
 	"log"
 	"net/http"
 	"os"
@@ -10,23 +10,23 @@ import (
 	"time"
 )
 
-func Register(r *mux.Router) {
-	r.HandleFunc("/images", postImage).Methods("POST")
-	r.HandleFunc("/images/latest", getLatest).Methods("GET")
-	r.HandleFunc("/images/{id:[0-9]+}", getByIndex).Methods("GET")
+func Register(r *web.Router) {
+	r.Post("/images", postImage)
+	r.Get("/images/latest", getLatest)
+	r.Get("/images/:id", getByIndex)
 }
 
-func getLatest(w http.ResponseWriter, req *http.Request) {
+func getLatest(w web.ResponseWriter, req *web.Request) {
 	file, err := image_storage.GetMostRecentImageFile()
 	if err != nil {
 		log.Println("error: ", err)
 		return
 	}
-	serveAndClose(file, w, req)
+	serveAndClose(file, w, req.Request)
 }
 
-func getByIndex(w http.ResponseWriter, req *http.Request) {
-	index, err := strconv.Atoi(mux.Vars(req)["index"])
+func getByIndex(w web.ResponseWriter, req *web.Request) {
+	index, err := strconv.Atoi(req.PathParams["index"])
 	if err != nil {
 		return
 	}
@@ -35,7 +35,7 @@ func getByIndex(w http.ResponseWriter, req *http.Request) {
 		log.Println("error: ", err)
 		return
 	}
-	serveAndClose(file, w, req)
+	serveAndClose(file, w, req.Request)
 }
 
 func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
@@ -47,11 +47,12 @@ func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
 	http.ServeContent(w, req, file.Name(), time.Now(), file)
 }
 
-func postImage(w http.ResponseWriter, r *http.Request) {
+func postImage(w web.ResponseWriter, r *web.Request) {
 	imageFile, _, err := r.FormFile("image")
 	if err != nil {
 		return
 	}
 	defer imageFile.Close()
 	image_storage.Store(imageFile)
+	w.WriteHeader(http.StatusOK)
 }

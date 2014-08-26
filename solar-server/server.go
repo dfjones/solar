@@ -2,18 +2,21 @@ package main
 
 import (
 	"github.com/dfjones/solar/solar-server/image-resource"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/gocraft/web"
 	"net/http"
-	"os"
 )
+
+type Context struct {
+}
 
 func main() {
 
-	r := mux.NewRouter()
+	router := web.New(Context{}).
+		Middleware(web.LoggerMiddleware).
+		Middleware(web.StaticMiddleware("./public")).
+		Middleware(web.StaticMiddleware("/gopath/src/app/public"))
 
-	image_resource.Register(r)
+	image_resource.Register(router)
 
-	http.Handle("/", handlers.CombinedLoggingHandler(os.Stdout, r))
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":3000", router)
 }
