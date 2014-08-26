@@ -13,7 +13,7 @@ import (
 func Register(r *web.Router) {
 	r.Post("/images", postImage)
 	r.Get("/images/latest", getLatest)
-	r.Get("/images/:id", getByIndex)
+	r.Get("/images/:index", getByIndex)
 }
 
 func getLatest(w web.ResponseWriter, req *web.Request) {
