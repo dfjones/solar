@@ -1,6 +1,7 @@
 package image_resource
 
 import (
+	"github.com/dfjones/solar/solar-server/image-analysis"
 	"github.com/dfjones/solar/solar-server/image-storage"
 	"github.com/gocraft/web"
 	"log"
@@ -53,6 +54,12 @@ func postImage(w web.ResponseWriter, r *web.Request) {
 		return
 	}
 	defer imageFile.Close()
-	image_storage.Store(imageFile)
+	file, err := image_storage.Store(imageFile)
+	if err != nil {
+		log.Println("Error storing image: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	image_analysis.Analyze(file)
 	w.WriteHeader(http.StatusOK)
 }

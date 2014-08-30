@@ -2,6 +2,7 @@ package image_storage
 
 import (
 	"fmt"
+	"github.com/dfjones/solar/solar-server/lib/cappedlist"
 	"io"
 	"log"
 	"os"
@@ -17,6 +18,7 @@ const maxFileCount int = 288
 
 var cleanUpSignal chan struct{} = make(chan struct{})
 var _pathCache *pathCache = &pathCache{}
+var _pc *cappedlist.CappedList
 
 var counter uint64
 
@@ -25,27 +27,33 @@ type pathCache struct {
 	sync.RWMutex
 }
 
+type listEntry struct {
+	path string
+}
+
 func init() {
 	os.MkdirAll(dataDir, os.ModeDir|os.ModePerm)
 	_pathCache.build()
+	_pc = cappedlist.New()
 	go cleanup()
 }
 
-func Store(reader io.Reader) error {
+func Store(reader io.Reader) (string, error) {
 	fileName := getFileName()
 	file, err := os.Create(dataDir + fileName)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
 	_, err = io.Copy(file, reader)
 	if err != nil {
-		return err
+		return "", err
 	}
 	_pathCache.add(file.Name())
+	_pc.Add(&listEntry{file.Name()})
 	cleanUpSignal <- struct{}{}
-	return nil
+	return file.Name(), nil
 }
 
 func GetMostRecentImageFile() (*os.File, error) {
