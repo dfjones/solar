@@ -16,23 +16,18 @@ const dataDir string = "/data/solar/images/"
 const maxFileCount int = 288
 
 var cleanUpSignal chan struct{} = make(chan struct{})
-var mostRecentImageInfo MostRecentImageInfo
+var _pathCache *pathCache = &pathCache{}
 
 var counter uint64
 
-type MostRecentImageInfo struct {
-	path string
+type pathCache struct {
+	paths []string
 	sync.RWMutex
 }
 
 func init() {
 	os.MkdirAll(dataDir, os.ModeDir|os.ModePerm)
-	imageFiles := listImageFiles()
-	if len(imageFiles) > 0 {
-		mostRecentImageInfo.Lock()
-		defer mostRecentImageInfo.Unlock()
-		mostRecentImageInfo.path = imageFiles[len(imageFiles)-1]
-	}
+	_pathCache.build()
 	go cleanup()
 }
 
@@ -48,13 +43,13 @@ func Store(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	updateMostRecent(file)
+	_pathCache.add(file.Name())
 	cleanUpSignal <- struct{}{}
 	return nil
 }
 
 func GetMostRecentImageFile() (*os.File, error) {
-	path := getMostRecentPath()
+	path := _pathCache.mostRecent()
 	if path == "" {
 		return nil, nil
 	}
@@ -62,24 +57,52 @@ func GetMostRecentImageFile() (*os.File, error) {
 }
 
 func GetByIndex(i int) (*os.File, error) {
-	images := listImageFiles()
-	l := len(images)
-	if l == 0 || i >= l {
-		return nil, nil
+	p := _pathCache.index(i)
+	if p != "" {
+		return os.Open(p)
 	}
-	return os.Open(images[i])
+	return nil, nil
 }
 
-func getMostRecentPath() string {
-	mostRecentImageInfo.RLock()
-	defer mostRecentImageInfo.RUnlock()
-	return mostRecentImageInfo.path
+func (p *pathCache) build() {
+	p.Lock()
+	defer p.Unlock()
+	p.paths = listImageFiles()
 }
 
-func updateMostRecent(file *os.File) {
-	mostRecentImageInfo.Lock()
-	defer mostRecentImageInfo.Unlock()
-	mostRecentImageInfo.path = file.Name()
+func (p *pathCache) add(path string) {
+	p.Lock()
+	defer p.Unlock()
+	p.paths = append(p.paths, path)
+}
+
+func (p *pathCache) index(i int) string {
+	p.RLock()
+	defer p.RUnlock()
+	l := len(p.paths)
+	if l != 0 && i < l {
+		return p.paths[i]
+	}
+	return ""
+}
+
+func (p *pathCache) mostRecent() string {
+	p.RLock()
+	defer p.RUnlock()
+	return p.paths[len(p.paths)-1]
+}
+
+func (p *pathCache) oldestOverLimit(limit int) []string {
+	p.Lock()
+	defer p.Unlock()
+	diff := len(p.paths) - limit
+	if diff > 0 {
+		result := make([]string, diff)
+		copy(result, p.paths[:diff])
+		p.paths = p.paths[diff:]
+		return result
+	}
+	return nil
 }
 
 func getFileName() string {
@@ -98,19 +121,16 @@ func cleanup() {
 }
 
 func removeOldestFiles() {
-	imageFiles := listImageFiles()
-	extraFileCount := len(imageFiles) - maxFileCount
+	oldest := _pathCache.oldestOverLimit(maxFileCount)
 	log.Println("Starting to remove oldest files...")
-	for i, p := range imageFiles {
-		if i >= extraFileCount {
-			return
-		}
+	for i, p := range oldest {
 		log.Println("Removing: ", i, p)
 		err := os.Remove(p)
 		if err != nil {
 			log.Println("Error removing file: ", err)
 		}
 	}
+	log.Println("Finished removing oldest files")
 }
 
 func listImageFiles() []string {
