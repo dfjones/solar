@@ -7,17 +7,17 @@ import (
 type Entry interface{}
 
 type CappedList struct {
-	entries         []*Entry
-	removedCallback func(*Entry)
+	entries         []Entry
+	removedCallback func(Entry)
 	cap             int
 	sync.RWMutex
 }
 
 func New(cap int) *CappedList {
-	l := &CappedList{make([]Entry, 1), nil, cap, sync.RWMutex{}}
+	return &CappedList{make([]Entry, cap), nil, cap, sync.RWMutex{}}
 }
 
-func (l *CappedList) Add(e *Entry) {
+func (l *CappedList) Add(e Entry) {
 	l.Lock()
 	defer l.Unlock()
 	l.entries = append(l.entries, e)
@@ -30,7 +30,7 @@ func (l *CappedList) Add(e *Entry) {
 	}
 }
 
-func (l *CappedList) At(index int) {
+func (l *CappedList) At(index int) Entry {
 	l.RLock()
 	defer l.RUnlock()
 	length := len(l.entries)
@@ -40,15 +40,24 @@ func (l *CappedList) At(index int) {
 	return nil
 }
 
-func (l *CappedList) Last() {
+func (l *CappedList) Last() Entry {
 	l.RLock()
 	defer l.RUnlock()
 	n := len(l.entries)
 	if n > 0 {
 		return l.entries[n-1]
 	}
+	return nil
 }
 
-func (l *CappedList) RegisterRemovedEntryCallback(callback func(*Entry)) {
+func (l *CappedList) All() []Entry {
+	l.RLock()
+	defer l.RUnlock()
+	cpy := make([]Entry, len(l.entries))
+	copy(cpy, l.entries)
+	return cpy
+}
+
+func (l *CappedList) RegisterRemovedEntryCallback(callback func(Entry)) {
 	l.removedCallback = callback
 }

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -16,26 +15,29 @@ import (
 const dataDir string = "/data/solar/images/"
 const maxFileCount int = 288
 
-var cleanUpSignal chan struct{} = make(chan struct{})
-var _pathCache *pathCache = &pathCache{}
-var _pc *cappedlist.CappedList
+var cleanUpSignal chan string = make(chan string, 10)
+var pathCache *cappedlist.CappedList = cappedlist.New(maxFileCount)
 
 var counter uint64
 
-type pathCache struct {
-	paths []string
-	sync.RWMutex
-}
-
-type listEntry struct {
-	path string
-}
-
 func init() {
 	os.MkdirAll(dataDir, os.ModeDir|os.ModePerm)
-	_pathCache.build()
-	_pc = cappedlist.New()
+	buildPathCache()
 	go cleanup()
+}
+
+func buildPathCache() {
+	pathCache.RegisterRemovedEntryCallback(cacheRemoveCallback)
+	files := listImageFiles()
+	for _, p := range files {
+		pathCache.Add(p)
+	}
+}
+
+func cacheRemoveCallback(entry cappedlist.Entry) {
+	if e, ok := entry.(string); ok {
+		cleanUpSignal <- e
+	}
 }
 
 func Store(reader io.Reader) (string, error) {
@@ -50,67 +52,41 @@ func Store(reader io.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_pathCache.add(file.Name())
-	_pc.Add(&listEntry{file.Name()})
-	cleanUpSignal <- struct{}{}
+	pathCache.Add(file.Name())
 	return file.Name(), nil
 }
 
 func GetMostRecentImageFile() (*os.File, error) {
-	path := _pathCache.mostRecent()
-	if path == "" {
-		return nil, nil
-	}
-	return os.Open(path)
-}
-
-func GetByIndex(i int) (*os.File, error) {
-	p := _pathCache.index(i)
-	if p != "" {
-		return os.Open(p)
+	path := pathCache.Last()
+	if path, ok := path.(string); ok {
+		if path == "" {
+			return nil, nil
+		}
+		return os.Open(path)
 	}
 	return nil, nil
 }
 
-func (p *pathCache) build() {
-	p.Lock()
-	defer p.Unlock()
-	p.paths = listImageFiles()
-}
-
-func (p *pathCache) add(path string) {
-	p.Lock()
-	defer p.Unlock()
-	p.paths = append(p.paths, path)
-}
-
-func (p *pathCache) index(i int) string {
-	p.RLock()
-	defer p.RUnlock()
-	l := len(p.paths)
-	if l != 0 && i < l {
-		return p.paths[i]
+func GetByIndex(i int) (*os.File, error) {
+	path := pathCache.At(i)
+	if path == nil {
+		return nil, nil
 	}
-	return ""
-}
-
-func (p *pathCache) mostRecent() string {
-	p.RLock()
-	defer p.RUnlock()
-	return p.paths[len(p.paths)-1]
-}
-
-func (p *pathCache) oldestOverLimit(limit int) []string {
-	p.Lock()
-	defer p.Unlock()
-	diff := len(p.paths) - limit
-	if diff > 0 {
-		result := make([]string, diff)
-		copy(result, p.paths[:diff])
-		p.paths = p.paths[diff:]
-		return result
+	if path, ok := path.(string); ok {
+		return os.Open(path)
 	}
-	return nil
+	return nil, nil
+}
+
+func GetAllPaths() []string {
+	entries := pathCache.All()
+	res := make([]string, 0)
+	for _, e := range entries {
+		if e, ok := e.(string); ok {
+			res = append(res, e)
+		}
+	}
+	return res
 }
 
 func getFileName() string {
@@ -122,23 +98,18 @@ func getNextId() uint64 {
 }
 
 func cleanup() {
-	for _ = range cleanUpSignal {
-		// walk all the files in our data directory and gather them into a slice
-		removeOldestFiles()
+	for path := range cleanUpSignal {
+		removeFile(path)
 	}
 }
 
-func removeOldestFiles() {
-	oldest := _pathCache.oldestOverLimit(maxFileCount)
-	log.Println("Starting to remove oldest files...")
-	for i, p := range oldest {
-		log.Println("Removing: ", i, p)
-		err := os.Remove(p)
-		if err != nil {
-			log.Println("Error removing file: ", err)
-		}
+func removeFile(path string) {
+	log.Println("Removing: ", path)
+	err := os.Remove(path)
+	if err != nil {
+		log.Println("Error removing file: ", err)
 	}
-	log.Println("Finished removing oldest files")
+	log.Println("Finished removing file", path)
 }
 
 func listImageFiles() []string {

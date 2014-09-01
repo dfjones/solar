@@ -9,27 +9,36 @@ import (
 	"time"
 )
 
-var analyzeChan chan string = make(chan string)
+var analyzeChan chan string = make(chan string, 300)
+
 var colorMax float64 = float64(0xFFFF)
 var eightMax float64 = float64(0xFF)
 
 func init() {
-	go analyzer()
+	for i := 0; i < 2; i++ {
+		go analyzer()
+	}
 }
 
 func Analyze(fileName string) {
 	analyzeChan <- fileName
 }
 
+func diffMs(start, end time.Time) int64 {
+	return (end.UnixNano() - start.UnixNano()) / int64(1e6)
+}
+
 func analyzer() {
 	for f := range analyzeChan {
+		start := time.Now()
 		analyze(f)
+		log.Println("Analysis time: ", diffMs(start, time.Now()), "ms")
 	}
 }
 
 func analyze(fileName string) {
-	start := time.Now()
-	log.Println("Decode start...")
+	decode := time.Now()
+	log.Println("Decode start: ", fileName)
 	file, err := os.Open(fileName)
 	if err != nil {
 		log.Println("Error opening file:", err)
@@ -37,16 +46,19 @@ func analyze(fileName string) {
 	}
 	defer file.Close()
 	img, err := jpeg.Decode(file)
-	log.Println("Decode finish in:", time.Now().Unix()-start.Unix(), " ms")
+	log.Println("Decode finish in:", diffMs(decode, time.Now()), " ms")
 	if err != nil {
 		log.Println("Error decoding file:", err)
 		return
 	}
-	start = time.Now()
+	calcAvg := time.Now()
 	avg := avgColor(img)
-	log.Println("Avg Color in:", time.Now().Unix()-start.Unix(), " ms")
+	log.Println("Avg Color in:", diffMs(calcAvg, time.Now()), " ms")
 	log.Println("Avg Color:", avg)
-
+	AnalysisCache.Add(&AnalyzedImage{
+		fileName,
+		avg,
+	})
 }
 
 func avgColor(img image.Image) color.RGBA {
