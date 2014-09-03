@@ -14,7 +14,7 @@ type CappedList struct {
 }
 
 func New(cap int) *CappedList {
-	return &CappedList{make([]Entry, cap), nil, cap, sync.RWMutex{}}
+	return &CappedList{make([]Entry, 0, cap), nil, cap, sync.RWMutex{}}
 }
 
 func (l *CappedList) Add(e Entry) {

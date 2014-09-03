@@ -6,6 +6,7 @@ import (
 	"image/jpeg"
 	"log"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -15,7 +16,7 @@ var colorMax float64 = float64(0xFFFF)
 var eightMax float64 = float64(0xFF)
 
 func init() {
-	for i := 0; i < 2; i++ {
+	for i := 0; i < runtime.NumCPU()-1; i++ {
 		go analyzer()
 	}
 }

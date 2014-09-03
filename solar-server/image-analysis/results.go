@@ -6,8 +6,8 @@ import (
 )
 
 type AnalyzedImage struct {
-	path         string
-	averageColor color.RGBA
+	Path         string
+	AverageColor color.RGBA
 }
 
 var AnalysisCache *cappedlist.CappedList = cappedlist.New(288)

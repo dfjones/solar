@@ -10,49 +10,63 @@
         var max = 288;
         var index = 0;
 
-        $("#left").click(function(e){
-          left();
-        });
-        $("#right").click(function(e){
-          right();
-        });
-        $("#image").click(function(e){
-          var rect = this.getBoundingClientRect();
-          var mid = (rect.right - rect.left) / 2.0;
-          if (e.offsetX < mid) {
+        var analysis = [];
+
+        var updateAnalysis = function(runUpdate) {
+            $.getJSON("/analysis", function(data) {
+                $.each(data, function(key, val) {
+                    analysis.push(val)
+                });
+                if (runUpdate) {
+                  update();
+                }
+            });
+        };
+        updateAnalysis(true);
+
+        $("#left").click(function(e) {
             left();
-          } else {
+        });
+        $("#right").click(function(e) {
             right();
-          }
+        });
+        $("#image").click(function(e) {
+            var rect = this.getBoundingClientRect();
+            var mid = (rect.right - rect.left) / 2.0;
+            if (e.offsetX < mid) {
+                left();
+            } else {
+                right();
+            }
         });
 
         var imageResize = function() {
-          var ww = $(window).width() - 50;
-          var wh = $(window).height() - 50;
+            var ww = $(window).width() - 50;
+            var wh = $(window).height() - 50;
 
-          var ra = ww / ow;
-          var rb = wh / oh;
+            var ra = ww / ow;
+            var rb = wh / oh;
 
-          var a = {
-            w: ow * ra,
-            h: oh * ra
-          }
+            var a = {
+                w: ow * ra,
+                h: oh * ra
+            }
 
-          var b = {
-            w: ow * rb,
-            h: oh * rb
-          }
+            var b = {
+                w: ow * rb,
+                h: oh * rb
+            }
 
-          var winner = a;
+            var winner = a;
 
-          if (a.w > ww || a.h > wh) {
-            winner = b;
-          }
+            if (a.w > ww || a.h > wh) {
+                winner = b;
+            }
 
-          $("#image").attr({
-            "width": winner.w,
-            "height": winner.h
-          });
+            $("#image").attr({
+                "width": winner.w,
+                "height": winner.h
+            });
         };
 
         imageResize();
@@ -91,8 +105,9 @@
                 "src": "/solar/images/" + index
             });
             $("#desc").html("" + index);
+            var avgColor = analysis[index].AverageColor;
+            $("body").css("background-color", "rgb(" + avgColor.R + "," + avgColor.G + "," + avgColor.B + ")");
         };
-
     });
     </script>
 </head>
