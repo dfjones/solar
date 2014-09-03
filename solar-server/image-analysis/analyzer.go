@@ -16,7 +16,11 @@ var colorMax float64 = float64(0xFFFF)
 var eightMax float64 = float64(0xFF)
 
 func init() {
-	for i := 0; i < runtime.NumCPU()-1; i++ {
+	n := runtime.NumCPU() - 1
+	if n < 1 {
+		n = 1
+	}
+	for i := 0; i < n; i++ {
 		go analyzer()
 	}
 }
