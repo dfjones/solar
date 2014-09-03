@@ -13,7 +13,7 @@
         var analysis = [];
 
         var updateAnalysis = function(runUpdate) {
-            $.getJSON("/solar/analysis", function(data) {
+            $.getJSON("/analysis", function(data) {
                 $.each(data, function(key, val) {
                     analysis.push(val)
                 });
@@ -22,11 +22,12 @@
                 }
                 var colorline = $("#colorline");
                 colorline.html("");
+                var widthp = (1/analysis.length) * 100;
                 for (var i = 0; i < analysis.length; i++) {
                     var s = $("<div></div>")
                     s.css("background-color", toRGBStr(analysis[i].AverageColor));
                     s.css("float", "left");
-                    s.css("width", "4px");
+                    s.css("width", widthp + "%");
                     s.css("height", "20px");
                     s.click(function (i) {
                       return function (e) {
