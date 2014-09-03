@@ -13,7 +13,7 @@
         var analysis = [];
 
         var updateAnalysis = function(runUpdate) {
-            $.getJSON("/analysis", function(data) {
+            $.getJSON("/solar/analysis", function(data) {
                 $.each(data, function(key, val) {
                     analysis.push(val)
                 });
