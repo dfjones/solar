@@ -23,7 +23,6 @@ func Register(r *web.Router) {
 func getAll(w web.ResponseWriter, req *web.Request) {
 	entries := AnalysisCache.All()
 	encoder := json.NewEncoder(w)
-	log.Println(entries)
 	err := encoder.Encode(entries)
 	if err != nil {
 		log.Println("Error:", err)
