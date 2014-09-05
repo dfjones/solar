@@ -6,11 +6,15 @@ import (
 )
 
 func TestAvgColor(t *testing.T) {
-	file := "../test-images/1.jpeg"
-	analyze(file)
+	analyze("../test-images/1.jpeg")
+	compareAvgTo(t, color.RGBA{100, 113, 90, 255})
+	analyze("../test-images/2.jpeg")
+	compareAvgTo(t, color.RGBA{138, 141, 142, 255})
+}
+
+func compareAvgTo(t *testing.T, expected color.RGBA) {
 	ai := AnalysisCache.Last()
 	if ai, ok := ai.(*AnalyzedImage); ok {
-		expected := color.RGBA{100, 113, 90, 255}
 		if ai.AverageColor != expected {
 			t.Error("Expected color: ", expected, "Got: ", ai.AverageColor)
 		}
