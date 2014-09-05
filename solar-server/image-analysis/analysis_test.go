@@ -2,8 +2,13 @@ package image_analysis
 
 import (
 	"image/color"
+	"runtime"
 	"testing"
 )
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+}
 
 func TestAvgColor(t *testing.T) {
 	analyze("../test-images/1.jpeg")

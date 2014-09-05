@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -16,13 +17,7 @@ var colorMax float64 = float64(0xFFFF)
 var eightMax float64 = float64(0xFF)
 
 func init() {
-	n := runtime.NumCPU() - 1
-	if n < 1 {
-		n = 1
-	}
-	for i := 0; i < n; i++ {
-		go analyzer()
-	}
+	go analyzer()
 }
 
 func Analyze(fileName string) {
@@ -58,8 +53,7 @@ func analyze(fileName string) {
 	}
 	calcAvg := time.Now()
 	avg := avgColor(img)
-	log.Println("Avg Color in:", diffMs(calcAvg, time.Now()), " ms")
-	log.Println("Avg Color:", avg)
+	log.Println("Avg Color:", avg, diffMs(calcAvg, time.Now()), "ms")
 	AnalysisCache.Add(&AnalyzedImage{
 		fileName,
 		avg,
@@ -70,27 +64,51 @@ func avgColor(img image.Image) color.RGBA {
 	bounds := img.Bounds()
 	min := bounds.Min
 	max := bounds.Max
-	var r, g, b uint64
 	pixels := uint64(bounds.Size().X * bounds.Size().Y)
-	for y := min.Y; y < max.Y; y++ {
-		for x := min.X; x < max.X; x++ {
-			color := img.At(x, y)
-			cr, cg, cb, _ := color.RGBA()
-			r += uint64(cr)
-			g += uint64(cg)
-			b += uint64(cb)
-		}
+	// split y into sub arrays based on the number of cpu cores
+	cores := runtime.NumCPU()
+	pr := make([]uint64, cores)
+	pg := make([]uint64, cores)
+	pb := make([]uint64, cores)
+	var wg sync.WaitGroup
+	for i := 0; i < cores; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			var r, g, b uint64
+			for y := min.Y + i; y < max.Y; y += cores {
+				for x := min.X; x < max.X; x++ {
+					color := img.At(x, y)
+					cr, cg, cb, _ := color.RGBA()
+					r += uint64(cr)
+					g += uint64(cg)
+					b += uint64(cb)
+				}
+			}
+			pr[i] = r
+			pg[i] = g
+			pb[i] = b
+		}(i)
 	}
-	r /= pixels
-	g /= pixels
-	b /= pixels
-	log.Println("r g b p", r, g, b, pixels)
+	wg.Wait()
+	r := sum(pr) / pixels
+	g := sum(pg) / pixels
+	b := sum(pb) / pixels
+	//log.Println("r g b p", r, g, b, pixels)
 	return color.RGBA{
 		cVal(r),
 		cVal(g),
 		cVal(b),
 		uint8(0xFF),
 	}
+}
+
+func sum(a []uint64) uint64 {
+	var s uint64
+	for i := 0; i < len(a); i++ {
+		s += a[i]
+	}
+	return s
 }
 
 func cVal(p uint64) uint8 {
