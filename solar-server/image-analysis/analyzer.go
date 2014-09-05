@@ -65,7 +65,6 @@ func avgColor(img image.Image) color.RGBA {
 	min := bounds.Min
 	max := bounds.Max
 	pixels := uint64(bounds.Size().X * bounds.Size().Y)
-	// split y into sub arrays based on the number of cpu cores
 	cores := runtime.NumCPU()
 	pr := make([]uint64, cores)
 	pg := make([]uint64, cores)
