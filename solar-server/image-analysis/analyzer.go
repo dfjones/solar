@@ -72,8 +72,8 @@ func avgColor(img image.Image) color.RGBA {
 	max := bounds.Max
 	var r, g, b uint64
 	pixels := uint64(bounds.Size().X * bounds.Size().Y)
-	for x := min.X; x < max.X; x++ {
-		for y := min.Y; y < max.Y; y++ {
+	for y := min.Y; y < max.Y; y++ {
+		for x := min.X; x < max.X; x++ {
 			color := img.At(x, y)
 			cr, cg, cb, _ := color.RGBA()
 			r += uint64(cr)
