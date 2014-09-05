@@ -18,3 +18,9 @@ func TestAvgColor(t *testing.T) {
 		t.Error("Could not convert result to color.RGBA!")
 	}
 }
+
+func BenchmarkAnalyze(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		analyze("../test-images/1.jpeg")
+	}
+}
