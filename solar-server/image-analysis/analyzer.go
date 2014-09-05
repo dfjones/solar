@@ -70,17 +70,20 @@ func avgColor(img image.Image) color.RGBA {
 	bounds := img.Bounds()
 	min := bounds.Min
 	max := bounds.Max
-	var r, g, b float64
-	pixels := float64(bounds.Size().X * bounds.Size().Y)
+	var r, g, b uint64
+	pixels := uint64(bounds.Size().X * bounds.Size().Y)
 	for x := min.X; x < max.X; x++ {
 		for y := min.Y; y < max.Y; y++ {
 			color := img.At(x, y)
 			cr, cg, cb, _ := color.RGBA()
-			r += float64(cr) / pixels
-			g += float64(cg) / pixels
-			b += float64(cb) / pixels
+			r += uint64(cr)
+			g += uint64(cg)
+			b += uint64(cb)
 		}
 	}
+	r /= pixels
+	g /= pixels
+	b /= pixels
 	log.Println("r g b p", r, g, b, pixels)
 	return color.RGBA{
 		cVal(r),
@@ -90,6 +93,6 @@ func avgColor(img image.Image) color.RGBA {
 	}
 }
 
-func cVal(p float64) uint8 {
-	return uint8((p / colorMax) * eightMax)
+func cVal(p uint64) uint8 {
+	return uint8((float64(p) / float64(colorMax)) * eightMax)
 }
