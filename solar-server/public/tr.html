@@ -1,16 +1,56 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="tr.css">
     <script src="react.js"></script>
     <script src="JSXTransformer.js"></script>
   </head>
   <body>
-    <div id="example"></div>
+    <div class="main-wrapper"></div>
     <script type="text/jsx">
-      /** @jsx React.DOM */
+      /** @jsx React.DOM */ 
+
+      var Timeline = React.createClass({
+        
+        getInitialState: function() {
+          return {
+            index: 0
+          };
+        },
+
+        render: function() {
+          return (
+            <div className="timeline-container">
+              <Image root={this.props.root} index={this.state.index} />
+            </div>
+          )
+        }
+      });
+
+      var Image = React.createClass({
+
+        getImgSrc: function() {
+          return this.props.root + "images/" + this.props.index;
+        },
+
+        render: function () {
+          return (
+            <img className="solar-image" src={this.getImgSrc()}/>
+          );
+        }
+      });
+
+      var getRootPath = function() {
+        var url = document.URL;
+        var start = url.indexOf("//");
+        var rootEnd = url.lastIndexOf('/');
+        var root = url.substring(start, rootEnd + 1);
+        return root;
+      };
+
       React.renderComponent(
-        <h1>Hello, world!</h1>,
-        document.getElementById('example')
+        <Timeline root={getRootPath()} />,
+        document.getElementsByClassName("main-wrapper")[0]
       );
     </script>
   </body>
