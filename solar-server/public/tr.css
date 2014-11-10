@@ -2,7 +2,26 @@
   float: left;
 }
 
+.left {
+  float: left;
+}
+
+.right {
+  float: right;
+}
+
+.center {
+  margin-left: auto;
+  margin-right: auto;
+  width: 1%;
+}
+
 .solar-image {
-  width: 1000px;
-  height: 562px;
+  cursor: pointer;
+}
+
+.color-segment {
+  float: left;
+  height: 20px;
+  cursor: pointer;
 }

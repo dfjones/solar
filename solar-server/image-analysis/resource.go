@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 type imageJson struct {
 	Time         time.Time
 	AverageColor color.RGBA
+	Name         string
 }
 
 func Register(r *web.Router) {
@@ -39,5 +41,6 @@ func (ai *AnalyzedImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(imageJson{
 		time.Unix(unixtime, 0),
 		ai.AverageColor,
+		filepath.Base(ai.Path),
 	})
 }

@@ -78,6 +78,10 @@ func GetByIndex(i int) (*os.File, error) {
 	return nil, nil
 }
 
+func GetByName(fileName string) (*os.File, error) {
+	return os.Open(dataDir + fileName)
+}
+
 func GetAllPaths() []string {
 	entries := pathCache.All()
 	res := make([]string, 0)

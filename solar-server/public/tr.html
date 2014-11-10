@@ -4,24 +4,77 @@
     <link rel="stylesheet" href="tr.css">
     <script src="react.js"></script>
     <script src="JSXTransformer.js"></script>
+    <script src="jquery.js"></script>
   </head>
   <body>
     <div class="main-wrapper"></div>
     <script type="text/jsx">
       /** @jsx React.DOM */ 
 
+      var toRGB = function(c) {
+        return "rgb(" + c.R + "," + c.G + "," + c.B + ")"
+      }
+
       var Timeline = React.createClass({
         
         getInitialState: function() {
           return {
-            index: 0
+            index: 0,
+            avgColor: {
+              R: 255,
+              G: 255,
+              B: 255
+            },
+            analyzerData: []
           };
         },
 
+        componentDidMount: function() {
+          this.getAnalyzerData();
+          $(document).keydown($.proxy(function(e) {
+          switch (e.which) {
+                case 37: // left
+                    this.handleIndexDecrease();
+                    break;
+
+                case 39: // right
+                    this.handleIndexIncrease();
+                    break;
+            }
+          }, this));
+        },
+
+        getAnalyzerData: function() {
+          $.getJSON(this.props.root + "analysis", $.proxy(function(data) {
+            this.setState({analyzerData: data, avgColor: data[this.state.index].AverageColor});
+          }, this));
+        },
+
+        handleSetIndex: function(i) {
+          this.setState({index: i});
+        },
+
+        handleIndexDecrease: function() {
+          var index = this.state.index;
+          if (index === 0) {
+            index = this.state.analyzerData.length - 1;
+          } else {
+            index -= 1;
+          }
+          this.setState({index: index});
+        },
+
+        handleIndexIncrease: function() {
+          var index = this.state.index;
+          index = (index + 1) % this.state.analyzerData.length;
+          this.setState({index: index});
+        },
+
         render: function() {
+          $("body").css("background-color", toRGB(this.state.avgColor));
           return (
             <div className="timeline-container">
-              <Image root={this.props.root} index={this.state.index} />
+              <Image root={this.props.root} index={this.state.index} onIndexDecrease={this.handleIndexDecrease} onIndexIncrease={this.handleIndexIncrease} onSetIndex={this.handleSetIndex} analyzerData={this.state.analyzerData}/>
             </div>
           )
         }
@@ -29,14 +82,116 @@
 
       var Image = React.createClass({
 
+        getInitialState: function() {
+          return {
+            width: 1000,
+            height: 562
+          };
+        },
+
+        componentDidMount: function() {
+          $(window).resize($.proxy(this.handleWinResize, this));
+          this.handleWinResize();
+        },
+
+        handleWinResize: function() { 
+          var ow = 2592.0;
+          var oh = 1458.0;
+          var ww = $(window).width() - 50;
+          var wh = $(window).height() - 50;
+
+          var ra = ww / ow;
+          var rb = wh / oh;
+
+          var a = {
+              w: ow * ra,
+              h: oh * ra
+          }
+
+          var b = {
+              w: ow * rb,
+              h: oh * rb
+          }
+
+          var winner = a;
+
+          if (a.w > ww || a.h > wh) {
+              winner = b;
+          }
+          this.setState({width: winner.w, height: winner.h});
+        },
+
         getImgSrc: function() {
           return this.props.root + "images/" + this.props.index;
         },
 
+
+        handleClick: function(e) {
+          var rect = $(this.refs.image.getDOMNode())[0].getBoundingClientRect();
+          var mid = (rect.right - rect.left) / 2.0;
+          if (e.offsetX < mid) {
+            this.handleLeft();
+          } else {
+            this.handleRight();
+          }
+        },
+
+        handleLeft: function() {
+          this.props.onIndexDecrease();
+        },
+
+        handleRight: function() {
+          this.props.onIndexIncrease();
+        },
+
         render: function () {
           return (
-            <img className="solar-image" src={this.getImgSrc()}/>
+            <div>
+              <img ref="image" onClick={this.handleClick} width={this.state.width} height={this.state.height} className="solar-image" src={this.getImgSrc()}/>
+              <ColorLine data={this.props.analyzerData} onSetIndex={this.props.onSetIndex} />
+              <div>
+                <span className="left" onClick={this.handleLeft}> &#8592;</span>
+                <div className="center">{this.props.index}</div>
+                <span className="right" onClick={this.handleRight}> &#8594;</span>
+              </div>
+            </div>
           );
+        }
+      });
+      
+      var ColorLine = React.createClass({
+
+        render: function() {
+          var widthp = (1/this.props.data.length) * 100;
+          var i = -1;
+          var nodes = this.props.data.map(function(d) {
+            i++;
+            return (
+              <ColorSegment index={i} widthp={widthp} data={d} onSetIndex={this.props.onSetIndex}/> 
+            );
+          }, this);
+
+          return (
+            <div id="colorline">
+              {nodes}
+            </div>
+          );
+        }
+      });
+
+      var ColorSegment = React.createClass({
+        handleClick: function(e) {
+          e.preventDefault();
+          this.props.onSetIndex(this.props.index);
+        },
+        render: function() {
+          var divStyle = {
+            "background-color": toRGB(this.props.data.AverageColor),
+            "width": this.props.widthp + "%"
+          };
+          return (
+            <div className="color-segment" style={divStyle} onClick={this.handleClick}></div>
+          )
         }
       });
 

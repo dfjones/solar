@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -15,6 +16,7 @@ func Register(r *web.Router) {
 	r.Post("/images", postImage)
 	r.Get("/images/latest", getLatest)
 	r.Get("/images/:index", getByIndex)
+	r.Get("/images/perm/:link", getByPermalink)
 }
 
 func getLatest(w web.ResponseWriter, req *web.Request) {
@@ -37,6 +39,17 @@ func getByIndex(w web.ResponseWriter, req *web.Request) {
 		return
 	}
 	serveAndClose(file, w, req.Request)
+}
+
+func getByPermalink(w web.ResponseWriter, req *web.Request) {
+	link := req.PathParams["link"]
+	// make sure we strip any escape/directory characters and get just a file name
+	path := filepath.Base(link)
+	if file, err := image_storage.GetByName(path); err == nil {
+		serveAndClose(file, w, req.Request)
+	} else {
+		log.Println("error: ", err)
+	}
 }
 
 func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
