@@ -1,19 +1,32 @@
 .main-wrapper {
-  float: left;
+  margin: 10px;
+}
+
+.timeline-container {
+  position: relative;
+  display: inline-block;
+}
+
+.control-container {
+  padding: 20px;
 }
 
 .left {
-  float: left;
-}
-
-.right {
-  float: right;
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
 }
 
 .center {
-  margin-left: auto;
-  margin-right: auto;
-  width: 1%;
+  position: absolute;
+  left: 50%;
+  bottom: 0px;
+}
+
+.right {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
 }
 
 .solar-image {

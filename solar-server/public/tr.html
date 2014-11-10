@@ -154,7 +154,7 @@
             <div>
               <img ref="image" onClick={this.handleClick} width={this.state.width} height={this.state.height} className="solar-image" src={this.getImgSrc()}/>
               <ColorLine data={this.props.analyzerData} onSetIndex={this.props.onSetIndex} />
-              <div>
+              <div className="control-container">
                 <span className="left" onClick={this.handleLeft}> &#8592;</span>
                 <div className="center">{this.props.index}</div>
                 <span className="right" onClick={this.handleRight}> &#8594;</span>
