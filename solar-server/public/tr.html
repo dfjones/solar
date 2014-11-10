@@ -52,6 +52,9 @@
 
         handleSetIndex: function(i) {
           this.setState({index: i});
+          if (this.state.analyzerData.length > 0) {
+            this.setState({avgColor: this.state.analyzerData[i].AverageColor});
+          }
         },
 
         handleIndexDecrease: function() {
@@ -61,13 +64,13 @@
           } else {
             index -= 1;
           }
-          this.setState({index: index});
+          this.handleSetIndex(index);
         },
 
         handleIndexIncrease: function() {
           var index = this.state.index;
           index = (index + 1) % this.state.analyzerData.length;
-          this.setState({index: index});
+          this.handleSetIndex(index);
         },
 
         render: function() {
@@ -122,9 +125,11 @@
         },
 
         getImgSrc: function() {
-          return this.props.root + "images/" + this.props.index;
+          if (this.props.analyzerData.length > 0) {
+            return this.props.root + "images/perm/" + this.props.analyzerData[this.props.index].Name;
+          }
+          return "";
         },
-
 
         handleClick: function(e) {
           var rect = $(this.refs.image.getDOMNode())[0].getBoundingClientRect();
