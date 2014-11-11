@@ -42,6 +42,12 @@
                     break;
             }
           }, this));
+          window.onpopstate = $.proxy(this.handlePopState, this);
+          var hash = window.location.hash;
+          if (!!hash) {
+            var i = parseInt(hash.substring(1));
+            this.handleSetIndex(i);
+          }
         },
 
         getAnalyzerData: function() {
@@ -50,10 +56,18 @@
           }, this));
         },
 
-        handleSetIndex: function(i) {
+        handlePopState: function(s) {
+          this.handleSetIndex(s.state.index, true);
+        },
+
+        handleSetIndex: function(i, skipPushState) {
           this.setState({index: i});
           if (this.state.analyzerData.length > 0) {
             this.setState({avgColor: this.state.analyzerData[i].AverageColor});
+          }
+
+          if (!skipPushState) {
+            window.history.pushState({index: i}, "Image " + i, "#" + i);
           }
         },
 
@@ -75,9 +89,10 @@
 
         render: function() {
           $("body").css("background-color", toRGB(this.state.avgColor));
+          var index = this.state.index;
           return (
             <div className="timeline-container">
-              <Image root={this.props.root} index={this.state.index} onIndexDecrease={this.handleIndexDecrease} onIndexIncrease={this.handleIndexIncrease} onSetIndex={this.handleSetIndex} analyzerData={this.state.analyzerData}/>
+              <Image root={this.props.root} index={index} onIndexDecrease={this.handleIndexDecrease} onIndexIncrease={this.handleIndexIncrease} onSetIndex={this.handleSetIndex} analyzerData={this.state.analyzerData}/>
             </div>
           )
         }
