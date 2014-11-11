@@ -134,7 +134,8 @@
         handleClick: function(e) {
           var rect = $(this.refs.image.getDOMNode())[0].getBoundingClientRect();
           var mid = (rect.right - rect.left) / 2.0;
-          if (e.offsetX < mid) {
+          var offsetX = e.clientX - rect.left;
+          if (offsetX < mid) {
             this.handleLeft();
           } else {
             this.handleRight();
