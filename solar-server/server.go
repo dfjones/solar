@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/dfjones/solar/solar-server/image-analysis"
+	"github.com/dfjones/solar/solar-server/image-gif"
 	"github.com/dfjones/solar/solar-server/image-resource"
 	"github.com/dfjones/solar/solar-server/image-storage"
 	"github.com/gocraft/web"
@@ -23,6 +24,7 @@ func main() {
 
 	image_resource.Register(router)
 	image_analysis.Register(router)
+	image_gif.Register(router)
 
 	analyzePersisted()
 
@@ -33,5 +35,6 @@ func analyzePersisted() {
 	paths := image_storage.GetAllPaths()
 	for _, p := range paths {
 		image_analysis.Analyze(p)
+		image_gif.GetInstance().Submit(p)
 	}
 }

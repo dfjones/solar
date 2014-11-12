@@ -2,14 +2,14 @@ package image_resource
 
 import (
 	"github.com/dfjones/solar/solar-server/image-analysis"
+	"github.com/dfjones/solar/solar-server/image-gif"
 	"github.com/dfjones/solar/solar-server/image-storage"
+	"github.com/dfjones/solar/solar-server/lib/request"
 	"github.com/gocraft/web"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 )
 
 func Register(r *web.Router) {
@@ -25,7 +25,7 @@ func getLatest(w web.ResponseWriter, req *web.Request) {
 		log.Println("error: ", err)
 		return
 	}
-	serveAndClose(file, w, req.Request)
+	request.ServeAndClose(file, w, req.Request)
 }
 
 func getByIndex(w web.ResponseWriter, req *web.Request) {
@@ -38,7 +38,7 @@ func getByIndex(w web.ResponseWriter, req *web.Request) {
 		log.Println("error: ", err)
 		return
 	}
-	serveAndClose(file, w, req.Request)
+	request.ServeAndClose(file, w, req.Request)
 }
 
 func getByPermalink(w web.ResponseWriter, req *web.Request) {
@@ -46,19 +46,10 @@ func getByPermalink(w web.ResponseWriter, req *web.Request) {
 	// make sure we strip any escape/directory characters and get just a file name
 	path := filepath.Base(link)
 	if file, err := image_storage.GetByName(path); err == nil {
-		serveAndClose(file, w, req.Request)
+		request.ServeAndClose(file, w, req.Request)
 	} else {
 		log.Println("error: ", err)
 	}
-}
-
-func serveAndClose(file *os.File, w http.ResponseWriter, req *http.Request) {
-	if file == nil {
-		return
-	}
-	defer file.Close()
-	w.Header().Set("cache-control", "public, max-age=300")
-	http.ServeContent(w, req, file.Name(), time.Now(), file)
 }
 
 func postImage(w web.ResponseWriter, r *web.Request) {
@@ -73,6 +64,9 @@ func postImage(w web.ResponseWriter, r *web.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	image_analysis.Analyze(file)
+	image_gif.GetInstance().Submit(file)
+
 	w.WriteHeader(http.StatusOK)
 }
