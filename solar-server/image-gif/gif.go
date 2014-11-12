@@ -1,10 +1,10 @@
 package image_gif
 
 import (
+	"github.com/dfjones/solar/solar-server/lib/giflib"
 	"github.com/nfnt/resize"
 	"image"
 	"image/color/palette"
-	"image/draw"
 	"image/gif"
 	"image/jpeg"
 	"log"
@@ -86,7 +86,9 @@ func (g *GifGenerator) add(jpegName string) {
 	p := image.NewPaletted(bounds, palette.Plan9)
 
 	sr := m.Bounds()
-	draw.Draw(p, sr, m, sr.Min, draw.Src)
+	//draw.Draw(p, sr, m, sr.Min, draw.Src)
+	q := giflib.MedianCutQuantizer{NumColor: 256}
+	q.Quantize(p, sr, m, sr.Min)
 
 	if uint(len(g.gifd.Image)) > g.Conf.maxCount {
 		g.gifd.Image = g.gifd.Image[1:]
