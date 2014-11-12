@@ -46,7 +46,7 @@ func NewGenerator() *GifGenerator {
 }
 
 func NewConfig() *Config {
-	return &Config{width: 648, height: 365, maxCount: 288, delay: 50, loopCount: 100, dir: "/data/solar/gif/", fileName: "timelapse.gif"}
+	return &Config{width: 648, height: 365, maxCount: 288, delay: 25, loopCount: 100, dir: "/data/solar/gif/", fileName: "timelapse.gif"}
 }
 
 func (g *GifGenerator) OpenGif() (*os.File, error) {
