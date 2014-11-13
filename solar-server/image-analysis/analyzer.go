@@ -52,7 +52,7 @@ func analyze(fileName string) {
 		return
 	}
 	calcAvg := time.Now()
-	avg := avgColor(img)
+	avg := AvgColor(img)
 	log.Println("Avg Color:", avg, diffMs(calcAvg, time.Now()), "ms")
 	AnalysisCache.Add(&AnalyzedImage{
 		fileName,
@@ -60,7 +60,7 @@ func analyze(fileName string) {
 	})
 }
 
-func avgColor(img image.Image) color.RGBA {
+func AvgColor(img image.Image) color.RGBA {
 	bounds := img.Bounds()
 	min := bounds.Min
 	max := bounds.Max

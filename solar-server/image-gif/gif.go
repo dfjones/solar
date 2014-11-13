@@ -1,6 +1,7 @@
 package image_gif
 
 import (
+	"github.com/dfjones/solar/solar-server/image-analysis"
 	"github.com/dfjones/solar/solar-server/lib/giflib"
 	"github.com/nfnt/resize"
 	"image"
@@ -79,6 +80,12 @@ func (g *GifGenerator) add(jpegName string) {
 		return
 	}
 
+	avgColor := image_analysis.AvgColor(jpg)
+	cSum := avgColor.R + avgColor.G + avgColor.B
+	if cSum < 20 {
+		log.Println("Skipping image", jpegName, " because cSum: ", cSum)
+		return
+	}
 	m := resize.Resize(g.Conf.width, g.Conf.height, jpg, resize.Bicubic)
 
 	bounds := m.Bounds()
