@@ -82,7 +82,7 @@ func (g *GifGenerator) add(jpegName string) {
 
 	avgColor := image_analysis.AvgColor(jpg)
 	cSum := avgColor.R + avgColor.G + avgColor.B
-	if cSum < 20 {
+	if cSum < 50 {
 		log.Println("Skipping image", jpegName, " because cSum: ", cSum)
 		return
 	}
