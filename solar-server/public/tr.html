@@ -165,24 +165,34 @@
           this.props.onIndexIncrease();
         },
 
+        renderImg: function(idx, multi) {
+          var style = {
+            zIndex: idx === this.props.index ? 2 : 1
+          };
+
+          var className = "solar-image";
+          if (idx === 0 && multi) {
+            className = " solar-image-first"
+          }
+
+          return (
+            <img style={style} ref={"image-" + idx} onClick={this.handleClick} width={this.state.width} height={this.state.heigh} className={className} src={this.getImgSrc(idx)}/>
+          )
+        },
+
         render: function () {
 
-          var i = -1;
-          var imgNodes = this.props.analyzerData.map(function(d) {
-            i++;
-            var style = {
-              zIndex: i === this.props.index ? 2 : 1
-            };
+          var imgNodes = [];
+          if (this.state.width > 1000) {
+            var i = -1;
+            imgNodes = this.props.analyzerData.map(function(d) {
+              i++;
+              return this.renderImg(i, true);
+            }, this);
+          } else {
+            imgNodes = [this.renderImg(this.props.index, false)]
+          }
 
-            var className = "solar-image";
-            if (i === 0) {
-              className = " solar-image-first"
-            }
-
-            return (
-              <img style={style} ref={"image-" + i} onClick={this.handleClick} width={this.state.width} height={this.state.heigh} className={className} src={this.getImgSrc(i)}/>
-            )
-          }, this);
           return (
             <div>
               {imgNodes}
