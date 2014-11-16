@@ -147,7 +147,8 @@
         },
 
         handleClick: function(e) {
-          var rect = $(this.refs.image.getDOMNode())[0].getBoundingClientRect();
+          var ref = "image" + this.props.index;
+          var rect = $(this.refs[ref].getDOMNode())[0].getBoundingClientRect();
           var mid = (rect.right - rect.left) / 2.0;
           var offsetX = e.clientX - rect.left;
           if (offsetX < mid) {
@@ -176,7 +177,7 @@
           }
 
           return (
-            <img style={style} ref={"image-" + idx} onClick={this.handleClick} width={this.state.width} height={this.state.heigh} className={className} src={this.getImgSrc(idx)}/>
+            <img style={style} ref={"image" + idx} onClick={this.handleClick} width={this.state.width} height={this.state.heigh} className={className} src={this.getImgSrc(idx)}/>
           )
         },
 
