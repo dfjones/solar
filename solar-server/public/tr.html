@@ -185,10 +185,12 @@
           var imgNodes = [];
           if (this.state.width > 1000) {
             var i = -1;
-            imgNodes = this.props.analyzerData.map(function(d) {
-              i++;
-              return this.renderImg(i, true);
-            }, this);
+            var loadSize = 10;
+            var start = Math.max(this.props.index - loadSize, 0)
+            var end = Math.min(this.props.index + loadSize, this.props.analyzerData.length)
+            for (var i = start; i < end; i++) {
+              imgNodes.push(this.renderImg(i, true));
+            }
           } else {
             imgNodes = [this.renderImg(this.props.index, false)]
           }
