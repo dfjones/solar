@@ -165,13 +165,13 @@
           this.props.onIndexIncrease();
         },
 
-        renderImg: function(idx, multi) {
+        renderImg: function(idx, first) {
           var style = {
             zIndex: idx === this.props.index ? 2 : 1
           };
 
           var className = "solar-image";
-          if (idx === 0 && multi) {
+          if (first) {
             className = " solar-image-first"
           }
 
@@ -189,7 +189,7 @@
             var start = Math.max(this.props.index - loadSize, 0)
             var end = Math.min(this.props.index + loadSize, this.props.analyzerData.length)
             for (var i = start; i < end; i++) {
-              imgNodes.push(this.renderImg(i, true));
+              imgNodes.push(this.renderImg(i, i === start));
             }
           } else {
             imgNodes = [this.renderImg(this.props.index, false)]
