@@ -29,8 +29,17 @@
   bottom: 0px;
 }
 
+.solar-image-first {
+  position: relative;
+  top: 0px;
+  left: 0px;
+}
+
 .solar-image {
   cursor: pointer;
+  position: absolute;
+  top: 0px;
+  left: 0px;
 }
 
 .color-segment {

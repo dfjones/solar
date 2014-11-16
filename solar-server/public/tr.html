@@ -139,9 +139,9 @@
           this.setState({width: winner.w, height: winner.h});
         },
 
-        getImgSrc: function() {
+        getImgSrc: function(idx) {
           if (this.props.analyzerData.length > 0) {
-            return this.props.root + "images/perm/" + this.props.analyzerData[this.props.index].Name;
+            return this.props.root + "images/perm/" + this.props.analyzerData[idx].Name;
           }
           return "";
         },
@@ -166,9 +166,26 @@
         },
 
         render: function () {
+
+          var i = -1;
+          var imgNodes = this.props.analyzerData.map(function(d) {
+            i++;
+            var style = {
+              zIndex: i === this.props.index ? 2 : 1
+            };
+
+            var className = "solar-image";
+            if (i === 0) {
+              className = " solar-image-first"
+            }
+
+            return (
+              <img style={style} ref={"image-" + i} onClick={this.handleClick} width={this.state.width} height={this.state.heigh} className={className} src={this.getImgSrc(i)}/>
+            )
+          }, this);
           return (
             <div>
-              <img ref="image" onClick={this.handleClick} width={this.state.width} height={this.state.height} className="solar-image" src={this.getImgSrc()}/>
+              {imgNodes}
               <ColorLine data={this.props.analyzerData} onSetIndex={this.props.onSetIndex} />
               <div className="control-container">
                 <span className="left" onClick={this.handleLeft}> &#8592;</span>
