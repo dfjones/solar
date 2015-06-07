@@ -1,6 +1,7 @@
 package image_analysis
 
 import (
+	libcolor "github.com/dfjones/solar/solar-server/lib/color"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -15,6 +16,7 @@ var analyzeChan chan string = make(chan string, 300)
 
 var colorMax float64 = float64(0xFFFF)
 var eightMax float64 = float64(0xFF)
+var hMax float64 = float64(360)
 
 func init() {
 	go analyzer()
@@ -60,7 +62,7 @@ func analyze(fileName string) {
 	})
 }
 
-func AvgColor(img image.Image) color.RGBA {
+func AvgColor(img image.Image) color.HSL {
 	bounds := img.Bounds()
 	min := bounds.Min
 	max := bounds.Max
@@ -74,14 +76,17 @@ func AvgColor(img image.Image) color.RGBA {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			var r, g, b uint64
+			hbins := make([]float64, int(hMax))
+			var as, al float64
 			for y := min.Y + i; y < max.Y; y += cores {
 				for x := min.X; x < max.X; x++ {
-					color := img.At(x, y)
-					cr, cg, cb, _ := color.RGBA()
-					r += uint64(cr)
-					g += uint64(cg)
-					b += uint64(cb)
+					p := img.At(x, y)
+					pr, pg, pb, _ := p.RGBA()
+					h, s, l := libcolor.RGBToHSL(pr, pg, pb)
+					hbinIndex := round(h * hMax)
+					hbins[hbinIndex]++
+					as += s
+					al += l
 				}
 			}
 			pr[i] = r
@@ -108,6 +113,13 @@ func sum(a []uint64) uint64 {
 		s += a[i]
 	}
 	return s
+}
+
+func round(v float64) int {
+	if val < 0 {
+		return int(val - 0.5)
+	}
+	return int(val + 0.5)
 }
 
 func cVal(p uint64) uint8 {
