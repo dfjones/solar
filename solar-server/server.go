@@ -1,13 +1,14 @@
 package main
 
 import (
+	"net/http"
+	"runtime"
+
 	"github.com/dfjones/solar/solar-server/image-analysis"
 	"github.com/dfjones/solar/solar-server/image-gif"
 	"github.com/dfjones/solar/solar-server/image-resource"
 	"github.com/dfjones/solar/solar-server/image-storage"
 	"github.com/gocraft/web"
-	"net/http"
-	"runtime"
 )
 
 type Context struct {
