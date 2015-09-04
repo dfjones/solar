@@ -19,9 +19,9 @@ type threadResult struct {
 
 func newThreadResult() threadResult {
 	return threadResult{
-		hbins:       make([]int, int(hMax)),
-		saturations: make([]float64, int(hMax)),
-		lightness:   make([]float64, int(hMax)),
+		hbins:       make([]int, int(hMax+1)),
+		saturations: make([]float64, int(hMax+1)),
+		lightness:   make([]float64, int(hMax+1)),
 	}
 }
 
@@ -91,7 +91,7 @@ func AvgColor(img image.Image) libcolor.HSL {
 				for x := min.X; x < max.X; x++ {
 					p := img.At(x, y)
 					pr, pg, pb, _ := p.RGBA()
-					h, s, l := libcolor.RGBToHSL(uint8(pr), uint8(pg), uint8(pb))
+					h, s, l := libcolor.RGBToHSL(cVal(pr), cVal(pg), cVal(pb))
 					hbinIndex := round(h * hMax)
 					tr.hbins[hbinIndex]++
 					tr.saturations[hbinIndex] += s
@@ -114,14 +114,14 @@ func AvgColor(img image.Image) libcolor.HSL {
 
 	maxCount := merged.hbins[0]
 	hue := 0
-	for i := 1; i < int(hMax); i++ {
+	for i := 1; i <= int(hMax); i++ {
 		if merged.hbins[i] > maxCount {
 			maxCount = merged.hbins[i]
 			hue = i
 		}
 	}
 	return libcolor.HSL{
-		H: float64(hue),
+		H: float64(hue) / hMax,
 		S: merged.saturations[hue] / float64(maxCount),
 		L: merged.lightness[hue] / float64(maxCount),
 	}
@@ -142,6 +142,6 @@ func round(val float64) int {
 	return int(val + 0.5)
 }
 
-func cVal(p uint64) uint8 {
+func cVal(p uint32) uint8 {
 	return uint8((float64(p) / float64(colorMax)) * eightMax)
 }
