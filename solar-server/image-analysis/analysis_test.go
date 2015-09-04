@@ -1,23 +1,19 @@
 package image_analysis
 
 import (
-	"image/color"
-	"runtime"
 	"testing"
-)
 
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
+	libcolor "github.com/dfjones/solar/solar-server/lib/color"
+)
 
 func TestAvgColor(t *testing.T) {
 	analyze("../test-images/1.jpeg")
-	compareAvgTo(t, color.RGBA{100, 113, 90, 255})
+	compareAvgTo(t, libcolor.HSL{100, 113, 90})
 	analyze("../test-images/2.jpeg")
-	compareAvgTo(t, color.RGBA{138, 141, 142, 255})
+	compareAvgTo(t, libcolor.HSL{138, 141, 142})
 }
 
-func compareAvgTo(t *testing.T, expected color.RGBA) {
+func compareAvgTo(t *testing.T, expected libcolor.HSL) {
 	ai := AnalysisCache.Last()
 	if ai, ok := ai.(*AnalyzedImage); ok {
 		if ai.AverageColor != expected {

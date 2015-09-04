@@ -2,19 +2,20 @@ package image_analysis
 
 import (
 	"encoding/json"
-	"github.com/gocraft/web"
-	"image/color"
 	"log"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	libcolor "github.com/dfjones/solar/solar-server/lib/color"
+	"github.com/gocraft/web"
 )
 
 type imageJson struct {
 	Time         time.Time
-	AverageColor color.RGBA
+	AverageColor libcolor.HSL
 	Name         string
 }
 

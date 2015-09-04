@@ -1,27 +1,41 @@
 package image_analysis
 
 import (
-	libcolor "github.com/dfjones/solar/solar-server/lib/color"
 	"image"
-	"image/color"
 	"image/jpeg"
 	"log"
 	"os"
 	"runtime"
-	"sync"
 	"time"
+
+	libcolor "github.com/dfjones/solar/solar-server/lib/color"
 )
 
-var analyzeChan chan string = make(chan string, 300)
+type threadResult struct {
+	hbins       []int
+	saturations []float64
+	lightness   []float64
+}
 
-var colorMax float64 = float64(0xFFFF)
-var eightMax float64 = float64(0xFF)
-var hMax float64 = float64(360)
+func newThreadResult() threadResult {
+	return threadResult{
+		hbins:       make([]int, int(hMax)),
+		saturations: make([]float64, int(hMax)),
+		lightness:   make([]float64, int(hMax)),
+	}
+}
+
+var analyzeChan = make(chan string, 300)
+
+var colorMax = float64(0xFFFF)
+var eightMax = float64(0xFF)
+var hMax = float64(360)
 
 func init() {
 	go analyzer()
 }
 
+// Analyze the given file
 func Analyze(fileName string) {
 	analyzeChan <- fileName
 }
@@ -62,48 +76,54 @@ func analyze(fileName string) {
 	})
 }
 
-func AvgColor(img image.Image) color.HSL {
+// AvgColor computes the average HSL values for a given image
+func AvgColor(img image.Image) libcolor.HSL {
 	bounds := img.Bounds()
 	min := bounds.Min
 	max := bounds.Max
-	pixels := uint64(bounds.Size().X * bounds.Size().Y)
 	cores := runtime.NumCPU()
-	pr := make([]uint64, cores)
-	pg := make([]uint64, cores)
-	pb := make([]uint64, cores)
-	var wg sync.WaitGroup
+
+	resultChan := make(chan threadResult)
 	for i := 0; i < cores; i++ {
-		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
-			hbins := make([]float64, int(hMax))
-			var as, al float64
+			tr := newThreadResult()
 			for y := min.Y + i; y < max.Y; y += cores {
 				for x := min.X; x < max.X; x++ {
 					p := img.At(x, y)
 					pr, pg, pb, _ := p.RGBA()
-					h, s, l := libcolor.RGBToHSL(pr, pg, pb)
+					h, s, l := libcolor.RGBToHSL(uint8(pr), uint8(pg), uint8(pb))
 					hbinIndex := round(h * hMax)
-					hbins[hbinIndex]++
-					as += s
-					al += l
+					tr.hbins[hbinIndex]++
+					tr.saturations[hbinIndex] += s
+					tr.lightness[hbinIndex] += l
 				}
 			}
-			pr[i] = r
-			pg[i] = g
-			pb[i] = b
+			resultChan <- tr
 		}(i)
 	}
-	wg.Wait()
-	r := sum(pr) / pixels
-	g := sum(pg) / pixels
-	b := sum(pb) / pixels
-	//log.Println("r g b p", r, g, b, pixels)
-	return color.RGBA{
-		cVal(r),
-		cVal(g),
-		cVal(b),
-		uint8(0xFF),
+
+	merged := newThreadResult()
+	for i := 0; i < cores; i++ {
+		tr := <-resultChan
+		for h := 0; h <= int(hMax); h++ {
+			merged.hbins[h] += tr.hbins[h]
+			merged.saturations[h] += tr.saturations[h]
+			merged.lightness[h] += tr.lightness[h]
+		}
+	}
+
+	maxCount := merged.hbins[0]
+	hue := 0
+	for i := 1; i < int(hMax); i++ {
+		if merged.hbins[i] > maxCount {
+			maxCount = merged.hbins[i]
+			hue = i
+		}
+	}
+	return libcolor.HSL{
+		H: float64(hue),
+		S: merged.saturations[hue] / float64(maxCount),
+		L: merged.lightness[hue] / float64(maxCount),
 	}
 }
 
@@ -115,7 +135,7 @@ func sum(a []uint64) uint64 {
 	return s
 }
 
-func round(v float64) int {
+func round(val float64) int {
 	if val < 0 {
 		return int(val - 0.5)
 	}
