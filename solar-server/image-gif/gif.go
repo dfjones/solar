@@ -1,15 +1,16 @@
 package image_gif
 
 import (
-	"github.com/dfjones/solar/solar-server/image-analysis"
-	"github.com/dfjones/solar/solar-server/lib/giflib"
-	"github.com/nfnt/resize"
 	"image"
 	"image/color/palette"
 	"image/gif"
 	"image/jpeg"
 	"log"
 	"os"
+
+	"github.com/dfjones/solar/solar-server/image-analysis"
+	"github.com/dfjones/solar/solar-server/lib/giflib"
+	"github.com/nfnt/resize"
 )
 
 var instance *GifGenerator
@@ -41,7 +42,7 @@ func GetInstance() *GifGenerator {
 func NewGenerator() *GifGenerator {
 	c := NewConfig()
 	g := &GifGenerator{SubmitChan: make(chan string, 300),
-		Conf: *c, gifd: gif.GIF{make([]*image.Paletted, 0), make([]int, 0), c.loopCount}}
+		Conf: *c, gifd: gif.GIF{make([]*image.Paletted, 0), make([]int, 0), c.loopCount, nil, image.Config{}, 0}}
 	go run(g)
 	return g
 }
@@ -81,9 +82,8 @@ func (g *GifGenerator) add(jpegName string) {
 	}
 
 	avgColor := image_analysis.AvgColor(jpg)
-	cSum := avgColor.R + avgColor.G + avgColor.B
-	if cSum < 50 {
-		log.Println("Skipping image", jpegName, " because cSum: ", cSum)
+	if avgColor.L < 0.10 {
+		log.Println("Skipping image", jpegName, " because L:", avgColor.L)
 		return
 	}
 	m := resize.Resize(g.Conf.width, g.Conf.height, jpg, resize.Bicubic)

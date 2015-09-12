@@ -1,7 +1,11 @@
 /** @jsx React.DOM */
 
 var toRGB = function(c) {
-  return "rgb(" + c.R + "," + c.G + "," + c.B + ")"
+  return "rgb(" + c.R + "," + c.G + "," + c.B + ")";
+}
+
+var toHSL = function(c) {
+  return "hsl(" + parseInt(c.H * 360) + "," + parseInt(c.S * 100) + "%," + parseInt(c.L * 100) + "%)";
 }
 
 var Timeline = React.createClass({displayName: "Timeline",
@@ -10,9 +14,9 @@ var Timeline = React.createClass({displayName: "Timeline",
     return {
       index: 0,
       avgColor: {
-        R: 255,
-        G: 255,
-        B: 255
+        H: 360,
+        S: 1,
+        L: 1
       },
       analyzerData: []
     };
@@ -77,7 +81,7 @@ var Timeline = React.createClass({displayName: "Timeline",
   },
 
   render: function() {
-    $("body").css("background-color", toRGB(this.state.avgColor));
+    $("body").css("background-color", toHSL(this.state.avgColor));
     var index = this.state.index;
     return (
       React.createElement("div", {className: "timeline-container"}, 
@@ -226,7 +230,7 @@ var ColorSegment = React.createClass({displayName: "ColorSegment",
   },
   render: function() {
     var divStyle = {
-      "background-color": toRGB(this.props.data.AverageColor),
+      "background-color": toHSL(this.props.data.AverageColor),
       "width": this.props.widthp + "%"
     };
     return (
